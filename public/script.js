@@ -21,11 +21,7 @@ showChat.addEventListener("click", () => {
 
 const user = prompt("Enter your name");
 
-var peer = new Peer(undefined, {
-  path: "/peerjs",
-  host: "/",
-  port: "443",
-});
+var peer = new Peer();
 
 let myVideoStream;
 navigator.mediaDevices
@@ -57,6 +53,93 @@ const connectToNewUser = (userId, stream) => {
     addVideoStream(video, userVideoStream);
   });
 };
+
+
+
+
+const shareScreen = async () => {
+
+
+
+
+  const socket = io('/')
+  const videoGrid = document.getElementById('video-grid')
+  const myPeer = new Peer(undefined, {
+    path: '/peerjs',
+    host: '/',
+    port: '443'
+  })
+const myVideo2 = document.createElement('video')
+myVideo2.muted = true;
+const peers = {}
+navigator.mediaDevices.getDisplayMedia({
+  video: true,
+  audio: true
+}).then(stream => {
+  myVideoStream = stream;
+  addVideoStream(myVideo2, stream)
+  myPeer.on('call', call => {
+    call.answer(stream)
+    const video2 = document.createElement('video')
+    call.on('stream', userVideoStream => {
+      addVideoStream(video2, userVideoStream)
+    })
+  })
+
+  socket.on('user-connected', userId => {
+    connectToNewUser(userId, stream)
+  })
+
+
+})
+
+socket.on('user-disconnected', userId => {
+  if (peers[userId]) peers[userId].close()
+})
+
+myPeer.on('open', id => {
+  socket.emit('join-room', ROOM_ID, id)
+})
+
+function connectToNewUser(userId, stream) {
+
+  const call = myPeer.call(userId, stream)
+  const video2 = document.createElement('video')
+  call.on('stream', userVideoStream => {
+
+  })
+  call.on('close', () => {
+    video2.remove()
+  })
+
+  peers[userId] = call
+}
+
+function addVideoStream(video2, stream) {
+  video2.srcObject = stream
+  video2.addEventListener('loadedmetadata', () => {
+    video2.play()
+  })
+  videoGrid.append(video2)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+};
+
+
 
 peer.on("open", (id) => {
   socket.emit("join-room", ROOM_ID, id, user);
@@ -137,4 +220,23 @@ socket.on("createMessage", (message, userName) => {
         }</span> </b>
         <span>${message}</span>
     </div>`;
+});
+
+function shareScreene()
+{
+
+
+
+}
+
+const exitButton = document.querySelector('.main__exit_button');
+
+exitButton.addEventListener("click", (e) => {
+  //window.close();
+  //process.exit()
+  //open(location, '_self').close();
+  if(confirm("Are you sure?")){
+  var win = window.open();
+  win.close();
+  }
 });
